@@ -42,6 +42,15 @@ bool buffer_numero_dois[numero_pixels] = {
     0, 1, 1, 1, 0,
 };
 
+bool buffer_numero_tres[numero_pixels] = {
+    0, 1, 1, 1, 0,
+    0, 0, 0, 1, 0,
+    0, 1, 1, 1, 0,
+    0, 0, 0, 1, 0,
+    0, 1, 1, 1, 0,
+};
+
+
 bool buffer_numero_cinco[numero_pixels] = {
     0, 1, 1, 1, 0,
     0, 0, 0, 1, 0,
@@ -92,7 +101,7 @@ int main()
     gpio_set_irq_enabled_with_callback(pino_botao_b, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler);
 
     // desenhando inicialmente o numero zero
-    desenhar_numero_na_matriz_de_leds(r, g, b, buffer_numero_zero);
+    desenhar_numero_na_matriz_de_leds(r, g, b, buffer_numero_tres);
 
     while (true) {
         
@@ -231,6 +240,9 @@ void gpio_irq_handler(uint gpio, uint32_t events) {
             break;
         case 2:
             desenhar_numero_na_matriz_de_leds(r, g, b, buffer_numero_dois);
+            break;
+        case 3:
+            desenhar_numero_na_matriz_de_leds(r, g, b, buffer_numero_tres);
             break;
         case 5:
             desenhar_numero_na_matriz_de_leds(r, g, b, buffer_numero_cinco);
