@@ -75,6 +75,14 @@ bool buffer_numero_seis[numero_pixels] = {
     0, 1, 1, 1, 0,
 };
 
+bool buffer_numero_sete[numero_pixels] = {
+    0, 1, 0, 0, 0,
+    0, 0, 0, 1, 0,
+    0, 1, 1, 0, 0,
+    0, 0, 0, 1, 0,
+    0, 1, 1, 1, 0,
+};
+
 
 bool buffer_numero_oito[numero_pixels] = {
     0, 1, 1, 1, 0,
@@ -270,6 +278,9 @@ void gpio_irq_handler(uint gpio, uint32_t events) {
             break;
         case 6:
             desenhar_numero_na_matriz_de_leds(r, g, b, buffer_numero_seis);
+            break;
+        case 7:
+            desenhar_numero_na_matriz_de_leds(r, g, b, buffer_numero_sete);
             break;
         case 8:
             desenhar_numero_na_matriz_de_leds(r, g, b, buffer_numero_oito);
