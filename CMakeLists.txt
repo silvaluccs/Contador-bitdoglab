@@ -41,7 +41,7 @@ pico_set_program_name(Tarefa-U4C4012T "Tarefa-U4C4012T")
 pico_set_program_version(Tarefa-U4C4012T "0.1")
 
 # Generate PIO header
-pico_generate_pio_header(Tarefa-U4C4012T ${CMAKE_CURRENT_LIST_DIR}/blink.pio)
+pico_generate_pio_header(Tarefa-U4C4012T ${CMAKE_CURRENT_LIST_DIR}/ws2812.pio)
 
 # Modify the below lines to enable/disable output over UART/USB
 pico_enable_stdio_uart(Tarefa-U4C4012T 0)
@@ -59,7 +59,7 @@ target_include_directories(Tarefa-U4C4012T PRIVATE
 # Add any user requested libraries
 target_link_libraries(Tarefa-U4C4012T 
         hardware_pio
-        
+        hardware_pwm
         )
 
 pico_add_extra_outputs(Tarefa-U4C4012T)
