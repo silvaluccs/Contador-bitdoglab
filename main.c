@@ -16,6 +16,8 @@ static volatile uint32_t ultimo_tempo = 0;
 static volatile uint numero_atual = 0;
 
 
+const uint r = 10, b = 0, g = 0;
+
 bool buffer_numero_zero[numero_pixels] = {
     0, 1, 1, 1, 0,
     0, 1, 0, 1, 0,
@@ -23,6 +25,15 @@ bool buffer_numero_zero[numero_pixels] = {
     0, 1, 0, 1, 0,
     0, 1, 1, 1, 0,
 };
+
+bool buffer_numero_um[numero_pixels] = {
+    0, 1, 0, 0, 0,
+    0, 0, 0, 1, 0,
+    0, 1, 0, 0, 0,
+    0, 0, 0, 1, 0,
+    0, 1, 0, 0, 0,
+};
+
 
 
 void setup_led_vermelho();
@@ -47,7 +58,7 @@ int main()
     gpio_set_irq_enabled_with_callback(pino_botao_a, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler);
     gpio_set_irq_enabled_with_callback(pino_botao_b, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler);
 
-    desenhar_numero_na_matriz_de_leds(100, 0, 0, buffer_numero_zero);
+    desenhar_numero_na_matriz_de_leds(r, g, b, buffer_numero_zero);
 
     while (true) {
         
@@ -58,7 +69,7 @@ int main()
             sleep_ms(100);           
         }
 
-        printf("Hello world.\n");
+        printf("Piscando.\n");
         sleep_ms(1000);
     }
 }
@@ -170,6 +181,23 @@ void gpio_irq_handler(uint gpio, uint32_t events) {
         --numero_atual;
         printf("Botão B pressionado. ");
         printf("Número atual: %d\n", numero_atual);
+    }
+    else {
+        numero_atual = numero_atual;
+    }
+
+    // desenhando o numero atual na matriz de leds
+    switch(numero_atual) {
+
+        case 0:
+            desenhar_numero_na_matriz_de_leds(r, g, b, buffer_numero_zero);
+            break;
+        case 1:
+            desenhar_numero_na_matriz_de_leds(r, g, b, buffer_numero_um);
+            break;
+        default:
+            break;
+
     }
 
 }
