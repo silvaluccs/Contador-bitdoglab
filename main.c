@@ -8,12 +8,22 @@ const uint pino_led_vermelho = 13;
 const uint pino_botao_a = 5;
 const uint pino_botao_b = 6;
 
-const uint numero_pixels = 25;
+#define numero_pixels 25
 const uint pino_matriz_leds = 7;
 const bool IS_RGBW = false;
 
 static volatile uint32_t ultimo_tempo = 0;
 static volatile uint numero_atual = 0;
+
+
+bool buffer_numero_zero[numero_pixels] = {
+    0, 1, 1, 1, 0,
+    0, 1, 0, 1, 0,
+    0, 1, 0, 1, 0,
+    0, 1, 0, 1, 0,
+    0, 1, 1, 1, 0,
+};
+
 
 void setup_led_vermelho();
 void setup_botoes();
@@ -21,7 +31,7 @@ void setup_matriz_leds();
 
 static inline void colocar_pixel(uint32_t pixel_rgb);
 static inline uint32_t urgb_u32(uint8_t r, uint8_t g, uint8_t b);
-void desenhar_numero_na_matriz_de_leds(uint8_t r, uint8_t g, uint8_t b, uint numero, bool *frame_numero_atual);
+void desenhar_numero_na_matriz_de_leds(uint8_t r, uint8_t g, uint8_t b, bool *frame_numero_atual);
 
 void gpio_irq_handler(uint gpio, uint32_t events);
 
@@ -37,6 +47,7 @@ int main()
     gpio_set_irq_enabled_with_callback(pino_botao_a, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler);
     gpio_set_irq_enabled_with_callback(pino_botao_b, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler);
 
+    desenhar_numero_na_matriz_de_leds(100, 0, 0, buffer_numero_zero);
 
     while (true) {
         
@@ -113,7 +124,7 @@ static inline uint32_t urgb_u32(uint8_t r, uint8_t g, uint8_t b)
 /*
 * Função para desenhar um número especifico na matriz de leds
 */
-void desenhar_numero_na_matriz_de_leds(uint8_t r, uint8_t g, uint8_t b, uint numero, bool *frame_numero_atual)
+void desenhar_numero_na_matriz_de_leds(uint8_t r, uint8_t g, uint8_t b, bool *frame_numero_atual)
 {
     // Define a cor com base nos parâmetros fornecidos
     uint32_t cor = urgb_u32(r, g, b);
