@@ -59,7 +59,7 @@ target_include_directories(Tarefa-U4C4012T PRIVATE
 # Add any user requested libraries
 target_link_libraries(Tarefa-U4C4012T 
         hardware_pio
-        
+        hardware_pwm
         )
 
 pico_add_extra_outputs(Tarefa-U4C4012T)
