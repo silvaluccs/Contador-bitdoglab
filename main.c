@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include "pico/stdlib.h"
 #include "hardware/pio.h"
+#include "hardware/timer.h"
 #include "ws2812.pio.h"
-
 
 const uint pino_led_vermelho = 13;
 const uint pino_botao_a = 5;
@@ -12,6 +12,8 @@ const uint numero_pixels = 25;
 const uint pino_matriz_leds = 7;
 const bool IS_RGBW = false;
 
+static volatile uint32_t ultimo_tempo = 0;
+static volatile uint numero_atual = 0;
 
 void setup_led_vermelho();
 void setup_botoes();
@@ -21,15 +23,31 @@ static inline void colocar_pixel(uint32_t pixel_rgb);
 static inline uint32_t urgb_u32(uint8_t r, uint8_t g, uint8_t b);
 void desenhar_numero_na_matriz_de_leds(uint8_t r, uint8_t g, uint8_t b, uint numero, bool *frame_numero_atual);
 
+void gpio_irq_handler(uint gpio, uint32_t events);
+
 int main()
 {
     stdio_init_all();
 
+    setup_matriz_leds(); // inicializando a matriz de leds
     setup_led_vermelho(); // inicializando o led vermelho
     setup_botoes(); // inicializando os botoes a e b
 
+    // definindo uma interrupção para os botoes na borda de descida
+    gpio_set_irq_enabled_with_callback(pino_botao_a, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler);
+    gpio_set_irq_enabled_with_callback(pino_botao_b, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler);
+
+
     while (true) {
-        printf("Hello, world!\n");
+        
+        for (int i = 0; i < 4; i++) {
+            gpio_put(pino_led_vermelho, true);
+            sleep_ms(100);
+            gpio_put(pino_led_vermelho, false);
+            sleep_ms(100);           
+        }
+
+        printf("Hello world.\n");
         sleep_ms(1000);
     }
 }
@@ -112,4 +130,35 @@ void desenhar_numero_na_matriz_de_leds(uint8_t r, uint8_t g, uint8_t b, uint num
             colocar_pixel(0);  // Desliga os LEDs com zero no buffer
         }
     }
+}
+
+
+/*
+* Função para tratar a interrupção dos botoes
+*/
+void gpio_irq_handler(uint gpio, uint32_t events) {
+
+    // fazendo o debouce
+    uint32_t tempo_atual = to_us_since_boot(get_absolute_time());
+
+    bool debouce = tempo_atual - ultimo_tempo > 200000;
+
+    if (!debouce) { // caso nao tenha passado o intervalo ideal entre pressionar os botoes
+        return;
+    }
+
+    ultimo_tempo = tempo_atual; // atualizando o tempo
+
+    if (gpio == pino_botao_a && numero_atual < 9) { // verificando se o numero esta na faixa adequada
+        ++numero_atual;
+        printf("Botão A pressionado. ");
+        printf("Número atual: %d\n", numero_atual);
+    }
+
+    else if (gpio == pino_botao_b && numero_atual > 0) { // verificando se o numero esta na faixa adequada
+        --numero_atual;
+        printf("Botão B pressionado. ");
+        printf("Número atual: %d\n", numero_atual);
+    }
+
 }
