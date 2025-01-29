@@ -27,11 +27,11 @@ bool buffer_numero_zero[numero_pixels] = {
 };
 
 bool buffer_numero_um[numero_pixels] = {
-    0, 1, 0, 0, 0,
-    0, 0, 0, 1, 0,
-    0, 1, 0, 0, 0,
-    0, 0, 0, 1, 0,
-    0, 1, 0, 0, 0,
+    0, 1, 1, 1, 0,
+    0, 0, 1, 0, 0,
+    0, 0, 1, 0, 0,
+    0, 1, 1, 0, 0,
+    0, 0, 1, 0, 0,
 };
 
 bool buffer_numero_dois[numero_pixels] = {
