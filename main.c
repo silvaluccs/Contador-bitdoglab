@@ -34,6 +34,39 @@ bool buffer_numero_um[numero_pixels] = {
     0, 1, 0, 0, 0,
 };
 
+bool buffer_numero_dois[numero_pixels] = {
+    0, 1, 1, 1, 0,
+    0, 1, 0, 0, 0,
+    0, 1, 1, 1, 0,
+    0, 0, 0, 1, 0,
+    0, 1, 1, 1, 0,
+};
+
+bool buffer_numero_cinco[numero_pixels] = {
+    0, 1, 1, 1, 0,
+    0, 0, 0, 1, 0,
+    0, 1, 1, 1, 0,
+    0, 1, 0, 0, 0,
+    0, 1, 1, 1, 0,
+};
+
+bool buffer_numero_seis[numero_pixels] = {
+    0, 1, 1, 1, 0,
+    0, 1, 0, 1, 0,
+    0, 1, 1, 1, 0,
+    0, 1, 0, 0, 0,
+    0, 1, 1, 1, 0,
+};
+
+
+bool buffer_numero_nove[numero_pixels] = {
+    0, 1, 1, 1, 0,
+    0, 0, 0, 1, 0,
+    0, 1, 1, 1, 0,
+    0, 1, 0, 1, 0,
+    0, 1, 1, 1, 0,
+};
+
 
 
 void setup_led_vermelho();
@@ -58,6 +91,7 @@ int main()
     gpio_set_irq_enabled_with_callback(pino_botao_a, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler);
     gpio_set_irq_enabled_with_callback(pino_botao_b, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler);
 
+    // desenhando inicialmente o numero zero
     desenhar_numero_na_matriz_de_leds(r, g, b, buffer_numero_zero);
 
     while (true) {
@@ -195,9 +229,21 @@ void gpio_irq_handler(uint gpio, uint32_t events) {
         case 1:
             desenhar_numero_na_matriz_de_leds(r, g, b, buffer_numero_um);
             break;
-        default:
+        case 2:
+            desenhar_numero_na_matriz_de_leds(r, g, b, buffer_numero_dois);
+            break;
+        case 5:
+            desenhar_numero_na_matriz_de_leds(r, g, b, buffer_numero_cinco);
+            break;
+        case 6:
+            desenhar_numero_na_matriz_de_leds(r, g, b, buffer_numero_seis);
             break;
 
+        case 9:
+            desenhar_numero_na_matriz_de_leds(r, g, b, buffer_numero_nove);
+            break;
+        default:
+            break;
     }
 
 }
