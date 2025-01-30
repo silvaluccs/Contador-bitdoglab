@@ -4,7 +4,7 @@
 #include "hardware/timer.h"
 #include "hardware/pwm.h"
 #include "ws2812.pio.h"
-
+#include "setup.h"
 
 const uint pino_led_vermelho = 13;
 const uint pino_botao_a = 5;
@@ -104,13 +104,6 @@ bool buffer_numero_nove[numero_pixels] = {
 };
 
 
-void setup_led_vermelho();
-void setup_botoes();
-void setup_matriz_leds();
-void pwm_init_buzzer(uint pin);
-
-void play_tone(uint pin, uint frequency, uint duration_ms);
-
 static inline void colocar_pixel(uint32_t pixel_rgb);
 static inline uint32_t urgb_u32(uint8_t r, uint8_t g, uint8_t b);
 void desenhar_numero_na_matriz_de_leds(uint8_t r, uint8_t g, uint8_t b, bool *frame_numero_atual);
@@ -121,9 +114,10 @@ int main()
 {
     stdio_init_all();
 
-    setup_matriz_leds(); // inicializando a matriz de leds
-    setup_led_vermelho(); // inicializando o led vermelho
-    setup_botoes(); // inicializando os botoes a e b
+    setup_led_vermelho(pino_led_vermelho);
+    setup_botoes(pino_botao_a, pino_botao_b);
+    setup_matriz_leds(pino_matriz_leds, IS_RGBW);
+
 
 
     // definindo uma interrupção para os botoes na borda de descida
@@ -148,44 +142,6 @@ int main()
 }
 
 
-/*
-* Função para inicializar o led vermelho
-*/
-void setup_led_vermelho() {
-
-    gpio_init(pino_led_vermelho); // inicializando o pino
-    gpio_set_dir(pino_led_vermelho, GPIO_OUT); // definindo como saida
-    gpio_put(pino_led_vermelho, false); // deixando desligado inicialmente
-
-}
-
-
-/*
-* Função para inicializar os botões a e b
-*/
-void setup_botoes() {
-
-    gpio_init(pino_botao_a); // inicializando o pino
-    gpio_set_dir(pino_botao_a, GPIO_IN); // defininfo como entrada
-    gpio_pull_up(pino_botao_a); // ativando resistores internos
-
-    gpio_init(pino_botao_b); // inicializando o pino
-    gpio_set_dir(pino_botao_b, GPIO_IN); // definindo como entrada
-    gpio_pull_up(pino_botao_b); // ativando resistores internos
-
-}
-
-/*
-* Função para inicializar a matriz de leds da placa
-*/
-void setup_matriz_leds() {
-
-    PIO pio = pio0;
-    int sm = 0;
-    uint offset = pio_add_program(pio, &ws2812_program);
-
-    ws2812_program_init(pio, sm, offset, pino_matriz_leds, 800000, IS_RGBW);
-}
 
 /*
 * Função para enviar o pixel para a matriz de leds
