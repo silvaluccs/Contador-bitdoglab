@@ -5,6 +5,7 @@
 #include "hardware/pwm.h"
 #include "ws2812.pio.h"
 #include "setup.h"
+#include "led.h"
 
 const uint pino_led_vermelho = 13;
 const uint pino_botao_a = 5;
@@ -119,7 +120,6 @@ int main()
     setup_matriz_leds(pino_matriz_leds, IS_RGBW);
 
 
-
     // definindo uma interrupção para os botoes na borda de descida
     gpio_set_irq_enabled_with_callback(pino_botao_a, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler);
     gpio_set_irq_enabled_with_callback(pino_botao_b, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler);
@@ -128,16 +128,8 @@ int main()
     desenhar_numero_na_matriz_de_leds(r, g, b, buffer_numero_zero);
 
     while (true) {
-        
-        for (int i = 0; i < 4; i++) {
-            gpio_put(pino_led_vermelho, true);
-            sleep_ms(100);
-            gpio_put(pino_led_vermelho, false);
-            sleep_ms(100);           
-        }
-
-        printf("Piscando.\n");
-        sleep_ms(1000);
+       piscar_led(pino_led_vermelho);
+       sleep_ms(1000);
     }
 }
 
