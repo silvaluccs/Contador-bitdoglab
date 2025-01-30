@@ -1,228 +1,48 @@
-#include <stdio.h>
-#include "pico/stdlib.h"
-#include "hardware/pio.h"
-#include "hardware/timer.h"
-#include "hardware/pwm.h"
-#include "ws2812.pio.h"
+#include <stdio.h> // biblioteca para usar printf
+#include "pico/stdlib.h" // biblioteca para usar stdio_init_all
+#include "hardware/pio.h"  // biblioteca para usar pio
+#include "hardware/timer.h" // biblioteca para usar timer
+#include "hardware/pwm.h" // biblioteca para usar pwm
+#include "ws2812.pio.h" // biblioteca para usar ws2812
+#include "setup.h" // biblioteca para usar as funções de setup  
+#include "led.h" // biblioteca para usar as funções do led
+#include "matriz_leds.h" // biblioteca para usar as funções da matriz de leds
 
 
-const uint pino_led_vermelho = 13;
-const uint pino_botao_a = 5;
-const uint pino_botao_b = 6;
-
-#define numero_pixels 25
-const uint pino_matriz_leds = 7;
-const bool IS_RGBW = false;
-
-static volatile uint32_t ultimo_tempo = 0;
-static volatile uint numero_atual = 0;
+const uint pino_led_vermelho = 13; // pino do led vermelho
+const uint pino_botao_a = 5; // pino do botao A
+const uint pino_botao_b = 6; // pino do botao B
+const uint pino_matriz_leds = 7; // pino da matriz de leds
 
 
-const uint r = 10, b = 0, g = 0;
-
-bool buffer_numero_zero[numero_pixels] = {
-    0, 1, 1, 1, 0,
-    0, 1, 0, 1, 0,
-    0, 1, 0, 1, 0,
-    0, 1, 0, 1, 0,
-    0, 1, 1, 1, 0,
-};
-
-bool buffer_numero_um[numero_pixels] = {
-    0, 1, 1, 1, 0,
-    0, 0, 1, 0, 0,
-    0, 0, 1, 0, 0,
-    0, 1, 1, 0, 0,
-    0, 0, 1, 0, 0,
-};
-
-bool buffer_numero_dois[numero_pixels] = {
-    0, 1, 1, 1, 0,
-    0, 1, 0, 0, 0,
-    0, 1, 1, 1, 0,
-    0, 0, 0, 1, 0,
-    0, 1, 1, 1, 0,
-};
-
-bool buffer_numero_tres[numero_pixels] = {
-    0, 1, 1, 1, 0,
-    0, 0, 0, 1, 0,
-    0, 1, 1, 1, 0,
-    0, 0, 0, 1, 0,
-    0, 1, 1, 1, 0,
-};
-
-bool buffer_numero_quatro[numero_pixels] = {
-    0, 1, 0, 0, 0,
-    0, 0, 0, 1, 0,
-    0, 1, 1, 1, 0,
-    0, 1, 0, 1, 0,
-    0, 1, 0, 1, 0,
-};
+static volatile uint32_t ultimo_tempo = 0; // variavel para debouce
+static volatile uint numero_atual = 0;  // variavel para armazenar o numero atual
 
 
-bool buffer_numero_cinco[numero_pixels] = {
-    0, 1, 1, 1, 0,
-    0, 0, 0, 1, 0,
-    0, 1, 1, 1, 0,
-    0, 1, 0, 0, 0,
-    0, 1, 1, 1, 0,
-};
-
-bool buffer_numero_seis[numero_pixels] = {
-    0, 1, 1, 1, 0,
-    0, 1, 0, 1, 0,
-    0, 1, 1, 1, 0,
-    0, 1, 0, 0, 0,
-    0, 1, 1, 1, 0,
-};
-
-bool buffer_numero_sete[numero_pixels] = {
-    0, 1, 0, 0, 0,
-    0, 0, 0, 1, 0,
-    0, 1, 1, 0, 0,
-    0, 0, 0, 1, 0,
-    0, 1, 1, 1, 0,
-};
+const uint r = 10, b = 0, g = 0; // valores de r, g e b para a matriz de leds
 
 
-bool buffer_numero_oito[numero_pixels] = {
-    0, 1, 1, 1, 0,
-    0, 1, 0, 1, 0,
-    0, 1, 1, 1, 0,
-    0, 1, 0, 1, 0,
-    0, 1, 1, 1, 0,
-};
-
-
-bool buffer_numero_nove[numero_pixels] = {
-    0, 1, 1, 1, 0,
-    0, 0, 0, 1, 0,
-    0, 1, 1, 1, 0,
-    0, 1, 0, 1, 0,
-    0, 1, 1, 1, 0,
-};
-
-
-void setup_led_vermelho();
-void setup_botoes();
-void setup_matriz_leds();
-void pwm_init_buzzer(uint pin);
-
-void play_tone(uint pin, uint frequency, uint duration_ms);
-
-static inline void colocar_pixel(uint32_t pixel_rgb);
-static inline uint32_t urgb_u32(uint8_t r, uint8_t g, uint8_t b);
-void desenhar_numero_na_matriz_de_leds(uint8_t r, uint8_t g, uint8_t b, bool *frame_numero_atual);
-
-void gpio_irq_handler(uint gpio, uint32_t events);
+void gpio_irq_handler(uint gpio, uint32_t events); // prototipo da função para tratar a interrupção dos botoes
 
 int main()
 {
-    stdio_init_all();
+    stdio_init_all(); // inicializando a comunicação serial
 
-    setup_matriz_leds(); // inicializando a matriz de leds
-    setup_led_vermelho(); // inicializando o led vermelho
-    setup_botoes(); // inicializando os botoes a e b
+    setup_led_vermelho(pino_led_vermelho); // inicializando o led vermelho
+    setup_botoes(pino_botao_a, pino_botao_b); // inicializando os botoes
+    setup_matriz_leds(pino_matriz_leds);  // inicializando a matriz de leds
 
 
     // definindo uma interrupção para os botoes na borda de descida
-    gpio_set_irq_enabled_with_callback(pino_botao_a, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler);
-    gpio_set_irq_enabled_with_callback(pino_botao_b, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler);
-
+    gpio_set_irq_enabled_with_callback(pino_botao_a, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler); // botao A
+    gpio_set_irq_enabled_with_callback(pino_botao_b, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler); // botao B
+ 
     // desenhando inicialmente o numero zero
-    desenhar_numero_na_matriz_de_leds(r, g, b, buffer_numero_zero);
+    desenhar_numero_na_matriz_de_leds(r, g, b, numero_atual); // desenhando o numero zero na matriz de leds
 
     while (true) {
-        
-        for (int i = 0; i < 4; i++) {
-            gpio_put(pino_led_vermelho, true);
-            sleep_ms(100);
-            gpio_put(pino_led_vermelho, false);
-            sleep_ms(100);           
-        }
-
-        printf("Piscando.\n");
-        sleep_ms(1000);
-    }
-}
-
-
-/*
-* Função para inicializar o led vermelho
-*/
-void setup_led_vermelho() {
-
-    gpio_init(pino_led_vermelho); // inicializando o pino
-    gpio_set_dir(pino_led_vermelho, GPIO_OUT); // definindo como saida
-    gpio_put(pino_led_vermelho, false); // deixando desligado inicialmente
-
-}
-
-
-/*
-* Função para inicializar os botões a e b
-*/
-void setup_botoes() {
-
-    gpio_init(pino_botao_a); // inicializando o pino
-    gpio_set_dir(pino_botao_a, GPIO_IN); // defininfo como entrada
-    gpio_pull_up(pino_botao_a); // ativando resistores internos
-
-    gpio_init(pino_botao_b); // inicializando o pino
-    gpio_set_dir(pino_botao_b, GPIO_IN); // definindo como entrada
-    gpio_pull_up(pino_botao_b); // ativando resistores internos
-
-}
-
-/*
-* Função para inicializar a matriz de leds da placa
-*/
-void setup_matriz_leds() {
-
-    PIO pio = pio0;
-    int sm = 0;
-    uint offset = pio_add_program(pio, &ws2812_program);
-
-    ws2812_program_init(pio, sm, offset, pino_matriz_leds, 800000, IS_RGBW);
-}
-
-/*
-* Função para enviar o pixel para a matriz de leds
-*/
-static inline void colocar_pixel(uint32_t pixel_rgb) {
-    pio_sm_put_blocking(pio0, 0, pixel_rgb << 8u);
-}
-
-
-/*
-* Função para converter os valores rgb
-*/
-static inline uint32_t urgb_u32(uint8_t r, uint8_t g, uint8_t b)
-{
-    return ((uint32_t)(r) << 8) | ((uint32_t)(g) << 16) | (uint32_t)(b);
-}
-
-
-/*
-* Função para desenhar um número especifico na matriz de leds
-*/
-void desenhar_numero_na_matriz_de_leds(uint8_t r, uint8_t g, uint8_t b, bool *frame_numero_atual)
-{
-    // Define a cor com base nos parâmetros fornecidos
-    uint32_t cor = urgb_u32(r, g, b);
-
-    // Define todos os LEDs com a cor especificada
-    for (int i = 0; i < numero_pixels; i++)
-    {
-        if (frame_numero_atual[i])
-        {
-            colocar_pixel(cor); // Liga o LED com um no buffer
-        }
-        else
-        {
-            colocar_pixel(0);  // Desliga os LEDs com zero no buffer
-        }
+       piscar_led(pino_led_vermelho); // piscando o led vermelho
+       sleep_ms(1000);
     }
 }
 
@@ -242,57 +62,23 @@ void gpio_irq_handler(uint gpio, uint32_t events) {
     }
 
     ultimo_tempo = tempo_atual; // atualizando o tempo
+ 
 
     if (gpio == pino_botao_a && numero_atual < 9) { // verificando se o numero esta na faixa adequada
-        ++numero_atual;
+        ++numero_atual; // incrementando o numero
         printf("Botão A pressionado. ");
         printf("Número atual: %d\n", numero_atual);
     }
 
     else if (gpio == pino_botao_b && numero_atual > 0) { // verificando se o numero esta na faixa adequada
-        --numero_atual;
+        --numero_atual; // decrementando o numero
         printf("Botão B pressionado. ");
         printf("Número atual: %d\n", numero_atual);
     }
-    else {
+    else { // caso o numero nao esteja na faixa adequada
         return;
     }
 
-    // desenhando o numero atual na matriz de leds
-    switch(numero_atual) {
-
-        case 0:
-            desenhar_numero_na_matriz_de_leds(r, g, b, buffer_numero_zero);
-            break;
-        case 1:
-            desenhar_numero_na_matriz_de_leds(r, g, b, buffer_numero_um);
-            break;
-        case 2:
-            desenhar_numero_na_matriz_de_leds(r, g, b, buffer_numero_dois);
-            break;
-        case 3:
-            desenhar_numero_na_matriz_de_leds(r, g, b, buffer_numero_tres);
-            break;
-        case 4:
-            desenhar_numero_na_matriz_de_leds(r, g, b, buffer_numero_quatro);
-            break;
-        case 5:
-            desenhar_numero_na_matriz_de_leds(r, g, b, buffer_numero_cinco);
-            break;
-        case 6:
-            desenhar_numero_na_matriz_de_leds(r, g, b, buffer_numero_seis);
-            break;
-        case 7:
-            desenhar_numero_na_matriz_de_leds(r, g, b, buffer_numero_sete);
-            break;
-        case 8:
-            desenhar_numero_na_matriz_de_leds(r, g, b, buffer_numero_oito);
-            break;
-        case 9:
-            desenhar_numero_na_matriz_de_leds(r, g, b, buffer_numero_nove);
-            break;
-        default:
-            break;
-    }
+    desenhar_numero_na_matriz_de_leds(r, g, b, numero_atual); // desenhando o numero na matriz de leds
 
 }
