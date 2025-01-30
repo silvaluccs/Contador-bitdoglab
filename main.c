@@ -6,13 +6,9 @@
 #include "ws2812.pio.h"
 
 
-const uint pino_buzzer_a = 21;
-const uint pino_buzzer_b = 10;
 const uint pino_led_vermelho = 13;
 const uint pino_botao_a = 5;
 const uint pino_botao_b = 6;
-
-const uint frequencia_buzzer = 10000;
 
 #define numero_pixels 25
 const uint pino_matriz_leds = 7;
@@ -111,9 +107,9 @@ bool buffer_numero_nove[numero_pixels] = {
 void setup_led_vermelho();
 void setup_botoes();
 void setup_matriz_leds();
-void setup_buzzers();
+void pwm_init_buzzer(uint pin);
 
-void beep(uint pino_buzzer, uint tempo);
+void play_tone(uint pin, uint frequency, uint duration_ms);
 
 static inline void colocar_pixel(uint32_t pixel_rgb);
 static inline uint32_t urgb_u32(uint8_t r, uint8_t g, uint8_t b);
@@ -125,10 +121,10 @@ int main()
 {
     stdio_init_all();
 
-    setup_buzzers(); // inicializando os buzzers
     setup_matriz_leds(); // inicializando a matriz de leds
     setup_led_vermelho(); // inicializando o led vermelho
     setup_botoes(); // inicializando os botoes a e b
+
 
     // definindo uma interrupção para os botoes na borda de descida
     gpio_set_irq_enabled_with_callback(pino_botao_a, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler);
@@ -192,31 +188,6 @@ void setup_matriz_leds() {
 }
 
 /*
-* Função para inicializar os buzzers
-*/
-void setup_buzzers() {
-
-
-    gpio_set_function(pino_buzzer_a, GPIO_FUNC_PWM);
-    gpio_set_function(pino_buzzer_b, GPIO_FUNC_PWM);
-
-    // Obter o slice do PWM associado ao pino
-    uint slice_num_buzzer_a = pwm_gpio_to_slice_num(pino_buzzer_a);
-    uint slice_num_buzzer_b = pwm_gpio_to_slice_num(pino_buzzer_b);
-
-    // Configurar o PWM com frequência desejada
-    pwm_config config = pwm_get_default_config();
-    pwm_config_set_clkdiv(&config, clock_get_hz(clk_sys) / (frequencia_buzzer * 4096)); // Divisor de clock
-    pwm_init(slice_num_buzzer_a, &config, true);
-    pwm_init(slice_num_buzzer_b, &config, true);
-
-    // Iniciar o PWM no nível baixo
-    pwm_set_gpio_level(pino_buzzer_a, 0);
-    pwm_set_gpio_level(pino_buzzer_b, 0);
-
-}
-
-/*
 * Função para enviar o pixel para a matriz de leds
 */
 static inline void colocar_pixel(uint32_t pixel_rgb) {
@@ -257,27 +228,6 @@ void desenhar_numero_na_matriz_de_leds(uint8_t r, uint8_t g, uint8_t b, bool *fr
 
 
 /*
-* Definição de uma função para emitir um beep com duração especificada
-*/ 
-void beep(uint pino_buzzer, uint tempo) {
-    // Obter o slice do PWM associado ao pino
-    uint slice_num = pwm_gpio_to_slice_num(pino_buzzer);
-
-    // Configurar o duty cycle para 50% (ativo)
-    pwm_set_gpio_level(pino_buzzer, 2048);
-
-    // Temporização
-    sleep_ms(100);
-
-    // Desativar o sinal PWM (duty cycle 0)
-    pwm_set_gpio_level(pino_buzzer, 0);
-
-    // Pausa entre os beeps
-    sleep_ms(100); // Pausa de 100ms
-}
-
-
-/*
 * Função para tratar a interrupção dos botoes
 */
 void gpio_irq_handler(uint gpio, uint32_t events) {
@@ -305,16 +255,7 @@ void gpio_irq_handler(uint gpio, uint32_t events) {
         printf("Número atual: %d\n", numero_atual);
     }
     else {
-        
-        if (gpio == pino_botao_a) {
-            beep(pino_buzzer_a, 30);
-        }
-        else {
-            beep(pino_buzzer_b, 30);
-        }
-
         return;
-
     }
 
     // desenhando o numero atual na matriz de leds
