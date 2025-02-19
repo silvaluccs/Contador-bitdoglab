@@ -4,9 +4,6 @@
 
 Este projeto implementa um contador utilizando o Raspberry Pi Pico. Ele exibe um número na matriz de LEDs e permite incrementar ou decrementar esse número através de botões.
 
-## Link para o vídeo explicativo
-https://drive.google.com/file/d/1oLeCOBB1dt3cCNhRaaSbrIgAZ8LoGENj/view?usp=drivesdk
-
 ## Funcionalidades
 - Exibição de números em uma matriz de LEDs.
 - Controle por dois botões:
